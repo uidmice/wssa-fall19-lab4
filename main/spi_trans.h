@@ -5,8 +5,10 @@
 #include "DebugMacros.h"
 
 
-// Chip Select Pin for SPI
-#define CS_PIN 51
+
+// Chip Select Pin for SPI and Interrupt Pin
+#define EXT_SPI_SS 4
+#define INT_PIN 51
 
 #define READ  0b01111111   // write command
 #define WRITE 0b10000000

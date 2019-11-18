@@ -23,11 +23,11 @@ void spi_write_cmd(uint8_t address, uint8_t tx_data) {
   debug_prints("(0x");
   debug_prints(c2, HEX);
   debug_printlns(")");
-  digitalWrite(CS_PIN, LOW);
+  digitalWrite(EXT_SPI_SS, LOW);
   SPI.transfer(c1);
   SPI.transfer(c2);
   SPI.transfer(tx_data);
-  digitalWrite(CS_PIN, HIGH);
+  digitalWrite(EXT_SPI_SS, HIGH);
     
 }
 
@@ -52,13 +52,14 @@ uint8_t spi_read_cmd(uint8_t address) {
   debug_prints("(0x");
   debug_prints(c2, HEX);
   debug_printlns(")");
-  digitalWrite(CS_PIN, LOW);
+  digitalWrite(EXT_SPI_SS, LOW);
   SPI.transfer(c1);
   SPI.transfer(c2);
   data = SPI.transfer(0x00);
-  digitalWrite(CS_PIN, HIGH);
+  digitalWrite(EXT_SPI_SS, HIGH);
   debug_prints("Read:  ");
-  debug_printlns(data, BIN);
+  debug_prints(data, BIN);
+  debug_printlns("b");
 
   return (data);
 

@@ -8,10 +8,17 @@ FXOS8700CQ::FXOS8700CQ() {
     magODR = MODR_100HZ; // Magnetometer data/sampling rate
     magOSR = MOSR_5;     // Choose magnetometer oversample rate
     magData = {0, 0, 0};      
-    whoAmIData = FXOS8700CQ_WHOAMI_VAL;     
+    whoAmIData = FXOS8700CQ_WHOAMI_VAL;    
+    _minX=0x7fff;
+    _minY=0x7fff; 
+    _minZ=0x7fff;
+    _maxX=0x8000;
+    _maxY=0x8000;
+    _maxZ=0x8000;
 
-    pinMode(CS_PIN, OUTPUT);        // Select the GPIO Pin 51 as SPI Chip Select
-    digitalWrite(CS_PIN, HIGH);     // Set Pin to high (Active Low)
+    pinMode(EXT_SPI_SS, OUTPUT);        // Select the GPIO Pin 51 as SPI Chip Select
+    digitalWrite(EXT_SPI_SS, HIGH);     // Set Pin to high (Active Low)
+    pinMode(INT_PIN, INPUT);
 }
 
 //------------------------------------------------------------------------------
@@ -95,6 +102,9 @@ void FXOS8700CQ::init() {
   writeReg(FXOS8700CQ_M_CTRL_REG1, data);
 
   checkWhoAmI();
+
+  calibrate(800);
+  
 }
 
 //------------------------------------------------------------------------------
@@ -106,6 +116,75 @@ void FXOS8700CQ::checkWhoAmI(void) {
     SerialUSB.println("ERROR: whoAmIData mismatch!!");
   else 
     debug_println("ID identified successfully." );
+}
+
+//*****************************************************************************
+
+//------------------------------------------------------------------------------
+// enMagInt(): Enable magnetic vector interrupt on INT1
+//------------------------------------------------------------------------------
+void FXOS8700CQ::enMagInt(void) {
+  writeReg(FXOS8700CQ_M_VECM_CFG, 0x7B);
+}
+
+//*****************************************************************************
+
+//------------------------------------------------------------------------------
+// disMagInt(): Disable magnetic vector interrupt on INT1
+//------------------------------------------------------------------------------
+void FXOS8700CQ::disMagInt(void) {
+  writeReg(FXOS8700CQ_M_VECM_CFG, 0);
+}
+
+//*****************************************************************************
+
+//*****************************************************************************
+
+//------------------------------------------------------------------------------
+// enDrdyInt(): Enable DRDY interrupt on INT1
+//------------------------------------------------------------------------------
+void FXOS8700CQ::enDrdyInt(void) {
+  writeReg(FXOS8700CQ_CTRL_REG4, 0x01);
+  writeReg(FXOS8700CQ_CTRL_REG5, 0x01);
+}
+
+//*****************************************************************************
+
+//------------------------------------------------------------------------------
+// disDrdyInt(): Disable DRDY interrupt on INT1
+//------------------------------------------------------------------------------
+void FXOS8700CQ::disDrdyInt(void) {
+  writeReg(FXOS8700CQ_CTRL_REG4, 0x00);
+  writeReg(FXOS8700CQ_CTRL_REG5, 0x00);
+}
+
+//*****************************************************************************
+
+//------------------------------------------------------------------------------
+// calibrate(int16_t thres): set offset and threshold values
+//------------------------------------------------------------------------------
+void FXOS8700CQ::calibrate(int16_t thres) {
+  byte data = readReg(FXOS8700CQ_M_CTRL_REG1);
+  writeReg(FXOS8700CQ_M_CTRL_REG1, (data | 0x80));
+  writeReg(FXOS8700CQ_M_CTRL_REG2, 0x01);
+
+  
+  uint8_t thresH = thres >> 8;
+  uint8_t thresL = (thres <<8)>>8;
+  writeReg(FXOS8700CQ_A_VECM_THS_MSB, thresH | 0x80);
+  writeReg(FXOS8700CQ_A_VECM_THS_LSB, thresL);
+  writeReg(FXOS8700CQ_A_VECM_CNT, 1);
+ 
+}
+
+//*****************************************************************************
+
+//------------------------------------------------------------------------------
+// readIntReg(): Read interrupt register
+//------------------------------------------------------------------------------
+byte FXOS8700CQ::readIntReg(void) {
+  byte data = readReg(FXOS8700CQ_M_INT_SRC);
+  return data;
 }
 
 //*****************************************************************************

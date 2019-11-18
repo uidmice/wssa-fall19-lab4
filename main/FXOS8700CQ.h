@@ -8,13 +8,12 @@
 #define FXOS8700CQ_H_
 
 #include <Arduino.h>
-#include <SPI.h>
 #include "spi_trans.h"
 #include "DebugMacros.h"
 
-
-#define DEBUG 0
-
+// Chip Select Pin for SPI and Interrupt Pin
+#define EXT_SPI_SS 4
+#define INT_PIN 51
 
 //------------------------------------------------------------------------------
 // Register Addresses
@@ -200,6 +199,21 @@ class FXOS8700CQ {
 
 				// Miscellaneous Functions
 				void checkWhoAmI(void);   // Read the Who Am I register
+        void enMagInt(void);
+        void disMagInt(void);
+        void enDrdyInt(void);
+        void disDrdyInt(void);
+        byte readIntReg(void);
+        void calibrate(int16_t);
+        
+    private:
+        int16_t _maxX;
+        int16_t _minX;
+        int16_t _maxY;
+        int16_t _minY;
+        int16_t _maxZ;
+        int16_t _minZ;
+        
 };
 
 #endif
