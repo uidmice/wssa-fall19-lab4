@@ -18,6 +18,7 @@ void setup() {
   sensor.init();
   sensor.enMagInt();
   sensor.disDrdyInt();
+  sensor.setThreshold(100);
 
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
@@ -29,8 +30,6 @@ void setup() {
   // Initialize SerialUSB
   SerialUSB.begin(9600);
   while (!SerialUSB);
-
-  delay(100);
 
   
 
@@ -86,7 +85,6 @@ static void processData(void* arg){
 }
 
 static void ISR_Handler(void ) {
-  BaseType_t xHigherPriorityTaskWoken = NULL;
   xSemaphoreGiveFromISR( sem1, NULL);
 }
 

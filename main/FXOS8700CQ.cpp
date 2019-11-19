@@ -48,21 +48,6 @@ void FXOS8700CQ::readMagData() {
   magData.x = (int16_t) (XU<<8)+XL;
   magData.y = (int16_t) (YU<<8)+YL;
   magData.z = (int16_t) (ZU<<8)+ZL;
-  debug_print("MagX read: ");
-  debug_prints(magData.x, DEC);
-  debug_prints("(0x");
-  debug_prints(magData.x, HEX);
-  debug_printlns(")");
-  debug_prints("MagY read: ");
-  debug_prints(magData.y, DEC);
-  debug_prints("(0x");
-  debug_prints(magData.y, HEX);
-  debug_printlns(")");
-  debug_prints("MagZ read: ");
-  debug_prints(magData.z, DEC);
-  debug_prints("(0x");
-  debug_prints(magData.z, HEX);
-  debug_printlns(")");
 
 }
 //------------------------------------------------------------------------------
@@ -100,10 +85,10 @@ void FXOS8700CQ::init() {
   //write to M_CTRL_REG1 reg, set to Mag-only mode and OSR = 5
   data = (magOSR << 2 ) | 0x01 ;
   writeReg(FXOS8700CQ_M_CTRL_REG1, data);
-
+  writeReg(FXOS8700CQ_M_VECM_CFG, 0x38);
   checkWhoAmI();
 
-  calibrate(800);
+  calibrate();
   
 }
 
@@ -133,7 +118,7 @@ void FXOS8700CQ::enMagInt(void) {
 // disMagInt(): Disable magnetic vector interrupt on INT1
 //------------------------------------------------------------------------------
 void FXOS8700CQ::disMagInt(void) {
-  writeReg(FXOS8700CQ_M_VECM_CFG, 0);
+  writeReg(FXOS8700CQ_M_VECM_CFG, 0x38);
 }
 
 //*****************************************************************************
@@ -161,20 +146,40 @@ void FXOS8700CQ::disDrdyInt(void) {
 //*****************************************************************************
 
 //------------------------------------------------------------------------------
-// calibrate(int16_t thres): set offset and threshold values
+// calibrate(): set offset and threshold values
 //------------------------------------------------------------------------------
-void FXOS8700CQ::calibrate(int16_t thres) {
-  byte data = readReg(FXOS8700CQ_M_CTRL_REG1);
-  writeReg(FXOS8700CQ_M_CTRL_REG1, (data | 0x80));
+void FXOS8700CQ::calibrate() {
   writeReg(FXOS8700CQ_M_CTRL_REG2, 0x01);
+  byte i;
+  for (i = 0; i < 30; i ++){
+    readMagData() ;
+    _minX = _minX < magData.x ? _minX : magData.x;
+    _maxX = _maxX > magData.x ? _maxX : magData.x;
+    _minY = _minY < magData.y ? _minY : magData.y;
+    _maxY = _maxY > magData.y ? _maxY : magData.y;
+    _minZ = _minZ < magData.z ? _minZ : magData.z;
+    _maxZ = _maxZ > magData.z ? _maxZ : magData.z;
 
+    delay(10);
+  }
+
+  int16_t refX = (_minX + _maxX) >> 1;
+  int16_t refY = (_minY + _maxY) >> 1;
+  int16_t refZ = (_minZ + _maxZ) >> 1;
+
+  SerialUSB.print("refX = ");
+  SerialUSB.print(refX);
+  SerialUSB.print(", refY = ");
+  SerialUSB.print(refY);
+  SerialUSB.print(", refZ = ");
+  SerialUSB.println(refZ);
+  writeReg(FXOS8700CQ_M_VECM_INITX_MSB, (refX & 0xFF00)>>8 );
+  writeReg(FXOS8700CQ_M_VECM_INITX_LSB, (refX & 0x00FF));
+  writeReg(FXOS8700CQ_M_VECM_INITY_MSB, (refY & 0xFF00)>>8 );
+  writeReg(FXOS8700CQ_M_VECM_INITY_LSB, (refY & 0x00FF));
+  writeReg(FXOS8700CQ_M_VECM_INITZ_MSB, (refZ & 0xFF00)>>8 );
+  writeReg(FXOS8700CQ_M_VECM_INITZ_LSB, (refZ & 0x00FF));
   
-  uint8_t thresH = thres >> 8;
-  uint8_t thresL = (thres <<8)>>8;
-  writeReg(FXOS8700CQ_A_VECM_THS_MSB, thresH | 0x80);
-  writeReg(FXOS8700CQ_A_VECM_THS_LSB, thresL);
-  writeReg(FXOS8700CQ_A_VECM_CNT, 1);
- 
 }
 
 //*****************************************************************************
@@ -185,6 +190,17 @@ void FXOS8700CQ::calibrate(int16_t thres) {
 byte FXOS8700CQ::readIntReg(void) {
   byte data = readReg(FXOS8700CQ_M_INT_SRC);
   return data;
+}
+
+//*****************************************************************************
+
+//------------------------------------------------------------------------------
+// setThreshold(): Set threshold for interrupt
+//------------------------------------------------------------------------------
+void FXOS8700CQ::setThreshold(int16_t thr) {
+    writeReg(FXOS8700CQ_M_VECM_THS_MSB, (thr & 0xFF00)>>8 );
+    writeReg(FXOS8700CQ_M_VECM_THS_LSB, (thr & 0x00FF) );
+
 }
 
 //*****************************************************************************

@@ -204,7 +204,8 @@ class FXOS8700CQ {
         void enDrdyInt(void);
         void disDrdyInt(void);
         byte readIntReg(void);
-        void calibrate(int16_t);
+        void calibrate(void);
+        void setThreshold(int16_t);
         
     private:
         int16_t _maxX;
