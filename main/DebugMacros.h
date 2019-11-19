@@ -3,7 +3,7 @@
 #define __DEBUGMACROS_H__
 
 static const char EMPTY[] = ""; 
-#define DEBUG 1
+#define DEBUG 0
 
 #define debug_print(msg, ...) \
   do { if (DEBUG) { SerialUSB.print(__func__); SerialUSB.print("::"); \

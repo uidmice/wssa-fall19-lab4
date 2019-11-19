@@ -7,7 +7,8 @@
 FXOS8700CQ::FXOS8700CQ() {
     magODR = MODR_100HZ; // Magnetometer data/sampling rate
     magOSR = MOSR_5;     // Choose magnetometer oversample rate
-    magData = {0, 0, 0};      
+    magData = {0, 0, 0};    
+    refMagData = {0, 0, 0}; 
     whoAmIData = FXOS8700CQ_WHOAMI_VAL;    
     _minX=0x7fff;
     _minY=0x7fff; 
@@ -163,22 +164,22 @@ void FXOS8700CQ::calibrate() {
     delay(10);
   }
 
-  int16_t refX = (_minX + _maxX) >> 1;
-  int16_t refY = (_minY + _maxY) >> 1;
-  int16_t refZ = (_minZ + _maxZ) >> 1;
+  refMagData.x = (_minX + _maxX) >> 1;
+  refMagData.y = (_minY + _maxY) >> 1;
+  refMagData.z = (_minZ + _maxZ) >> 1;
 
   SerialUSB.print("refX = ");
-  SerialUSB.print(refX);
+  SerialUSB.print(refMagData.x);
   SerialUSB.print(", refY = ");
-  SerialUSB.print(refY);
+  SerialUSB.print(refMagData.y);
   SerialUSB.print(", refZ = ");
-  SerialUSB.println(refZ);
-  writeReg(FXOS8700CQ_M_VECM_INITX_MSB, (refX & 0xFF00)>>8 );
-  writeReg(FXOS8700CQ_M_VECM_INITX_LSB, (refX & 0x00FF));
-  writeReg(FXOS8700CQ_M_VECM_INITY_MSB, (refY & 0xFF00)>>8 );
-  writeReg(FXOS8700CQ_M_VECM_INITY_LSB, (refY & 0x00FF));
-  writeReg(FXOS8700CQ_M_VECM_INITZ_MSB, (refZ & 0xFF00)>>8 );
-  writeReg(FXOS8700CQ_M_VECM_INITZ_LSB, (refZ & 0x00FF));
+  SerialUSB.println(refMagData.z);
+  writeReg(FXOS8700CQ_M_VECM_INITX_MSB, (refMagData.x & 0xFF00)>>8 );
+  writeReg(FXOS8700CQ_M_VECM_INITX_LSB, (refMagData.x & 0x00FF));
+  writeReg(FXOS8700CQ_M_VECM_INITY_MSB, (refMagData.y & 0xFF00)>>8 );
+  writeReg(FXOS8700CQ_M_VECM_INITY_LSB, (refMagData.y & 0x00FF));
+  writeReg(FXOS8700CQ_M_VECM_INITZ_MSB, (refMagData.z & 0xFF00)>>8 );
+  writeReg(FXOS8700CQ_M_VECM_INITZ_LSB, (refMagData.z & 0x00FF));
   
 }
 
@@ -189,7 +190,6 @@ void FXOS8700CQ::calibrate() {
 //------------------------------------------------------------------------------
 byte FXOS8700CQ::readIntReg(void) {
   byte data = readReg(FXOS8700CQ_M_INT_SRC);
-  return data;
 }
 
 //*****************************************************************************
@@ -200,6 +200,7 @@ byte FXOS8700CQ::readIntReg(void) {
 void FXOS8700CQ::setThreshold(int16_t thr) {
     writeReg(FXOS8700CQ_M_VECM_THS_MSB, (thr & 0xFF00)>>8 );
     writeReg(FXOS8700CQ_M_VECM_THS_LSB, (thr & 0x00FF) );
+
 
 }
 
