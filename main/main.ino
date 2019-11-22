@@ -37,7 +37,7 @@ void setup() {
   portBASE_TYPE s1 = xTaskCreate(collectData, NULL, configMINIMAL_STACK_SIZE, NULL, 2, NULL);
   portBASE_TYPE s2 = xTaskCreate(processData, NULL, configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
-  attachInterrupt(digitalPinToInterrupt(INT_PIN), ISR_Handler, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(INT_PIN), ISR_Handler, FALLING);
   sensor.readIntReg();
 
 
