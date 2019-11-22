@@ -8,7 +8,7 @@ static void ISR_Handler(void );
 
 FXOS8700CQ sensor;
 SemaphoreHandle_t sem1, sem2;
-int16_t thres = 120; //set interrupt threshold to be 12uT
+int16_t thres = 40; //set interrupt threshold to be 4uT
 
 void setup() {
   // Initialize SPI
@@ -56,11 +56,12 @@ void setup() {
 
 static void collectData(void* arg){
   float vX, vY, vZ, mag;
+  byte i;
   while (1) {
     xSemaphoreTake(sem1, portMAX_DELAY );
     SerialUSB.println("Interrupt due to magnetometer vector magnitude!");
 
-    for(;;){
+    for(i = 0; i < 100;i++){
       sensor.readMagData();
       vX = (sensor.magData.x-sensor.refMagData.x)* 0.1;
       vY = (sensor.magData.y-sensor.refMagData.y)* 0.1;
@@ -77,6 +78,8 @@ static void collectData(void* arg){
       delay(10); 
       
     }
+
+    if (i==99) sensor.calibrate();
     xSemaphoreGive(sem2);
   }
 }
