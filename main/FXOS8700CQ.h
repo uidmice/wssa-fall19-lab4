@@ -177,7 +177,7 @@ class FXOS8700CQ {
 
 				// Sensor data
 				SRAWDATA magData; 				// RAW magnometer sensor data
-        SRAWDATA refMagData;
+        SRAWDATA refMagData;      // RAW reference magnetometer values
 				uint8_t whoAmIData; 			// Who Am I data
 
 				// Sensor configuration

@@ -87,6 +87,8 @@ void FXOS8700CQ::init() {
   data = (magOSR << 2 ) | 0x01 ;
   writeReg(FXOS8700CQ_M_CTRL_REG1, data);
   writeReg(FXOS8700CQ_M_VECM_CFG, 0x38);
+  writeReg(FXOS8700CQ_M_VECM_CNT, 16);
+  
   checkWhoAmI();
 
   calibrate();

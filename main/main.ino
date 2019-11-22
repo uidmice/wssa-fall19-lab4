@@ -8,6 +8,7 @@ static void ISR_Handler(void );
 
 FXOS8700CQ sensor;
 SemaphoreHandle_t sem1, sem2;
+int16_t thres = 120; //set interrupt threshold to be 12uT
 
 void setup() {
   // Initialize SPI
@@ -22,7 +23,7 @@ void setup() {
   sensor.init();
   sensor.enMagInt();
   sensor.disDrdyInt();
-  sensor.setThreshold(120);
+  sensor.setThreshold(thres);
 
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
@@ -56,18 +57,26 @@ void setup() {
 static void collectData(void* arg){
   float vX, vY, vZ, mag;
   while (1) {
-    
     xSemaphoreTake(sem1, portMAX_DELAY );
     SerialUSB.println("Interrupt due to magnetometer vector magnitude!");
 
-    sensor.readMagData();
-    vX = (sensor.magData.x-sensor.refMagData.x)* 0.1;
-    vY = (sensor.magData.y-sensor.refMagData.y)* 0.1;
-    vZ = (sensor.magData.z-sensor.refMagData.z)* 0.1;
-    mag = sqrt(vX*vX+vY*vY+vZ*vZ);
-    SerialUSB.println(mag,1);
-    SerialUSB.println(vY,1);
-    SerialUSB.println(vZ,1);
+    for(;;){
+      sensor.readMagData();
+      vX = (sensor.magData.x-sensor.refMagData.x)* 0.1;
+      vY = (sensor.magData.y-sensor.refMagData.y)* 0.1;
+      vZ = (sensor.magData.z-sensor.refMagData.z)* 0.1;
+      mag = sqrt(vX*vX+vY*vY+vZ*vZ);
+      if (mag<thres * 0.1) 
+        break;
+      SerialUSB.print("\nMagnetometer:\n dX = ");
+      SerialUSB.println(vX, 4);
+      SerialUSB.print(" dY = ");
+      SerialUSB.println(vY, 4);
+      SerialUSB.print(" dZ = ");
+      SerialUSB.println(vZ, 4);
+      delay(10); 
+      
+    }
     xSemaphoreGive(sem2);
   }
 }
@@ -79,15 +88,13 @@ static void processData(void* arg){
     xSemaphoreTake (sem2, portMAX_DELAY);
     count ++;
     SerialUSB.println(count);
+    sensor.readIntReg();
   }
 
 }
 
 static void ISR_Handler(void ) {
-  byte intReg = sensor.readIntReg();
-  if (intReg & 0x02){
     xSemaphoreGiveFromISR( sem1, NULL);
-  }
 }
 
 void loop() {
